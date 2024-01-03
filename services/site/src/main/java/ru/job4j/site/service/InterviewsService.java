@@ -7,13 +7,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import ru.job4j.site.dto.InterviewDTO;
+import ru.job4j.site.dto.ProfileDTO;
 import ru.job4j.site.util.RestPageImpl;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class InterviewsService {
+
+    private final ProfilesService profilesService;
+
+    public InterviewsService(ProfilesService profilesService) {
+        this.profilesService = profilesService;
+    }
 
     public Page<InterviewDTO> getAll(String token, int page, int size)
             throws JsonProcessingException {
@@ -31,8 +38,19 @@ public class InterviewsService {
         var text = new RestAuthCall(String.format("http://localhost:9912/interviews/%d", type))
                 .get();
         var mapper = new ObjectMapper();
-        return mapper.readValue(text, new TypeReference<>() {
+        List<InterviewDTO> interviewsDTO = mapper.readValue(text, new TypeReference<>() {
         });
+        interviewsDTO.forEach(
+               el -> {
+                   Optional<ProfileDTO> profile = profilesService.getProfileById(el.getSubmitterId());
+                   if (profile.isPresent()) {
+                       el.setSubmitterName(profile.get().getUsername());
+                   } else {
+                       el.setSubmitterName("null21");
+                   }
+               }
+        );
+        return interviewsDTO;
     }
 
     public Page<InterviewDTO> getByTopicId(int topicId, int page, int size)

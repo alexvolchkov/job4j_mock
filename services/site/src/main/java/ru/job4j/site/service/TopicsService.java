@@ -3,11 +3,9 @@ package ru.job4j.site.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-import ru.job4j.site.dto.CategoryDTO;
-import ru.job4j.site.dto.TopicDTO;
-import ru.job4j.site.dto.TopicLiteDTO;
-import ru.job4j.site.dto.TopicIdNameDTO;
+import ru.job4j.site.dto.*;
 
 import java.util.Calendar;
 import java.util.List;
@@ -15,11 +13,30 @@ import java.util.List;
 @Service
 public class TopicsService {
 
+    private final InterviewsService interviewsService;
+    private TopicDTO topicDTO;
+
+    public TopicsService(InterviewsService interviewsService) {
+        this.interviewsService = interviewsService;
+    }
+
     public List<TopicDTO> getByCategory(int id) throws JsonProcessingException {
         var text = new RestAuthCall("http://localhost:9902/topics/" + id).get();
         var mapper = new ObjectMapper();
-        return mapper.readValue(text, new TypeReference<>() {
+        List<TopicDTO> topicDTOList = mapper.readValue(text, new TypeReference<>() {
         });
+        List<Integer> topicIds = topicDTOList.stream().map(TopicDTO::getId).toList();
+        Page<InterviewDTO> byTopicsIds = interviewsService.getByTopicsIds(topicIds, 0, 999);
+        byTopicsIds.stream().filter(el -> el.getStatus() == 1).forEach(System.out::println);
+        byTopicsIds.stream().filter(el -> el.getStatus() == 1)
+                .forEach(el -> {
+                    TopicDTO topic = topicDTOList.stream()
+                            .filter(elTopicDTO -> elTopicDTO.getId() == el.getTopicId())
+                            .findFirst()
+                            .get();
+                    topic.setNewInterviews(topic.getNewInterviews() + 1);
+                });
+        return topicDTOList;
     }
 
     public TopicDTO getById(int id) throws JsonProcessingException {

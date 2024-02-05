@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.checkdev.desc.domain.Topic;
+import ru.checkdev.desc.exception.IdNotFoundException;
 import ru.checkdev.desc.service.TopicService;
 
 @RequestMapping("/topic")
@@ -20,8 +21,7 @@ public class TopicControl {
         topicService.incrementTotal(id);
         return topic.map(
                 value -> new ResponseEntity<>(value, HttpStatus.OK)
-        ).orElseGet(
-                () -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        ).orElseThrow(() ->new IdNotFoundException("ID не найден"));
     }
 
     @GetMapping("/name/{id}")

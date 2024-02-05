@@ -21,7 +21,7 @@ public class TopicControl {
         topicService.incrementTotal(id);
         return topic.map(
                 value -> new ResponseEntity<>(value, HttpStatus.OK)
-        ).orElseThrow(() ->new IdNotFoundException("ID не найден"));
+        ).orElseThrow(() -> new IdNotFoundException("ID не найден"));
     }
 
     @GetMapping("/name/{id}")
